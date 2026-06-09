@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -196,7 +197,7 @@ func TestEventPoller_Secondary(t *testing.T) {
 		context.Background(),
 		instance.ID,
 		linodego.EntityLinode,
-		disks[0].ID,
+		strconv.Itoa(disks[0].ID),
 		linodego.ActionDiskDelete)
 	if err != nil {
 		t.Fatal(err)
@@ -207,7 +208,7 @@ func TestEventPoller_Secondary(t *testing.T) {
 		context.Background(),
 		instance.ID,
 		linodego.EntityLinode,
-		disks[1].ID,
+		strconv.Itoa(disks[1].ID),
 		linodego.ActionDiskDelete)
 	if err != nil {
 		t.Fatal(err)
@@ -233,15 +234,7 @@ func TestEventPoller_Secondary(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entityID := deleteEvent.SecondaryEntity.ID
-
-	// Sometimes the JSON unmarshaler will
-	// parse IDs as floats rather than ints.
-	if value, ok := entityID.(float64); ok {
-		entityID = int(value)
-	}
-
-	if entityID != disks[0].ID {
+	if deleteEvent.SecondaryEntity.ID != strconv.Itoa(disks[0].ID) {
 		t.Fatalf("expected event and first deleteEvent id to match; got %v", deleteEvent.SecondaryEntity.ID)
 	}
 }

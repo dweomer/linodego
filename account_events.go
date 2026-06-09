@@ -42,7 +42,7 @@ type Event struct {
 	Entity *EventEntity `json:"entity"`
 
 	// Detailed information about the Event's secondary or related entity, including ID, type, label, and URL used to access it.
-	SecondaryEntity *EventEntity `json:"secondary_entity"`
+	SecondaryEntity *EventSecondary `json:"secondary_entity"`
 
 	// When this Event was created.
 	Created *time.Time `json:"-"`
@@ -285,12 +285,21 @@ const (
 // associated entity, including ID, Type, Label, and a URL that
 // can be used to access it.
 type EventEntity struct {
-	// ID may be a string or int, it depends on the EntityType
-	ID     any        `json:"id"`
+	ID     int        `json:"id"`
 	Label  string     `json:"label"`
 	Type   EntityType `json:"type"`
 	Status string     `json:"status"`
 	URL    string     `json:"url"`
+}
+
+// EventSecondary provides detailed information about the Event's
+// secondary or related entity. Unlike EventEntity, the ID is a
+// string per the API spec (e.g. "linode/debian13").
+type EventSecondary struct {
+	ID    string     `json:"id"`
+	Label string     `json:"label"`
+	Type  EntityType `json:"type"`
+	URL   string     `json:"url"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface
