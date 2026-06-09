@@ -285,8 +285,7 @@ const (
 // associated entity, including ID, Type, Label, and a URL that
 // can be used to access it.
 type EventEntity struct {
-	// ID may be a string or int, it depends on the EntityType
-	ID     any        `json:"id"`
+	ID     int        `json:"id"`
 	Label  string     `json:"label"`
 	Type   EntityType `json:"type"`
 	Status string     `json:"status"`
