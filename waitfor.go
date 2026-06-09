@@ -17,12 +17,12 @@ var englishTitle = cases.Title(language.English)
 
 // EventPoller waits for events associated with a given entity and action.
 type EventPoller struct {
-	EntityID   any
+	EntityID   int
 	EntityType EntityType
 
 	// Type is excluded here because it is implicitly determined
 	// by the event action.
-	SecondaryEntityID any
+	SecondaryEntityID int
 
 	Action EventAction
 
@@ -234,7 +234,7 @@ func (client Client) WaitForLKEClusterConditions(
 // nolint
 func (client Client) WaitForEventFinished(
 	ctx context.Context,
-	id any,
+	id int,
 	entityType EntityType,
 	action EventAction,
 	minStart time.Time,
@@ -303,30 +303,7 @@ func (client Client) WaitForEventFinished(
 					continue
 				}
 
-				var entID string
-
-				switch id := event.Entity.ID.(type) {
-				case float64, float32:
-					entID = fmt.Sprintf("%.f", id)
-				case int:
-					entID = strconv.Itoa(id)
-				default:
-					entID = fmt.Sprintf("%v", id)
-				}
-
-				var findID string
-
-				switch id := id.(type) {
-				case float64, float32:
-					findID = fmt.Sprintf("%.f", id)
-				case int:
-					findID = strconv.Itoa(id)
-				default:
-					findID = fmt.Sprintf("%v", id)
-				}
-
-				if entID != findID {
-					// log.Println("id mismatch", entID, findID)
+				if event.Entity.ID != id {
 					continue
 				}
 
@@ -458,7 +435,7 @@ func (client Client) WaitForDatabaseStatus(
 // NewEventPoller initializes a new Linode event poller. This should be run before the event is triggered as it stores
 // the previous state of the entity's events.
 func (client Client) NewEventPoller(
-	ctx context.Context, id any, entityType EntityType, action EventAction,
+	ctx context.Context, id int, entityType EntityType, action EventAction,
 ) (*EventPoller, error) {
 	result := EventPoller{
 		EntityID:   id,
@@ -478,7 +455,7 @@ func (client Client) NewEventPoller(
 // NewEventPollerWithSecondary initializes a new Linode event poller with for events with a
 // specific secondary entity.
 func (client Client) NewEventPollerWithSecondary(
-	ctx context.Context, id any, primaryEntityType EntityType, secondaryID int, action EventAction,
+	ctx context.Context, id int, primaryEntityType EntityType, secondaryID int, action EventAction,
 ) (*EventPoller, error) {
 	poller, err := client.NewEventPoller(ctx, id, primaryEntityType, action)
 	if err != nil {
@@ -542,7 +519,7 @@ func (p *EventPoller) WaitForLatestUnknownEvent(ctx context.Context) (*Event, er
 			}
 
 			for _, event := range events {
-				if p.SecondaryEntityID != nil && !eventMatchesSecondary(p.SecondaryEntityID, event) {
+				if p.SecondaryEntityID != 0 && !eventMatchesSecondary(p.SecondaryEntityID, event) {
 					continue
 				}
 
@@ -645,21 +622,11 @@ func (client Client) WaitForResourceFree(
 // eventMatchesSecondary returns whether the given event's secondary entity
 // matches the configured secondary ID.
 // This logic has been broken out to improve readability.
-func eventMatchesSecondary(configuredID any, e Event) bool {
-	// We should return false if the event has no secondary entity.
-	// e.g. A previous disk deletion has completed.
+func eventMatchesSecondary(configuredID int, e Event) bool {
 	if e.SecondaryEntity == nil {
 		return false
 	}
-
-	secondaryID := e.SecondaryEntity.ID
-
-	// Evil hack to correct IDs parsed as floats
-	if value, ok := secondaryID.(float64); ok {
-		secondaryID = int(value)
-	}
-
-	return secondaryID == configuredID
+	return e.SecondaryEntity.ID == configuredID
 }
 
 // WaitForAlertDefinitionStatus waits for the Alert Definition to reach the specified status
